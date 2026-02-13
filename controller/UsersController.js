@@ -1,12 +1,16 @@
 import Users from "../models/UserModel.js"
-
+import db from "../config/DB.js";
 
 export const getUsers = async (req, res) => {
     try {
-        const response = await Users.findAll();
-        res.json(response);
+        const selectQuery =`
+            SELECT * 
+            FROM users
+        `;
+        const [response] = await db.query(selectQuery);
+        res.status(200).json(response);
     } catch (error) {
-        console.log(error);
+        res.status(500).json({msg : error.message});
     }
 }
 
@@ -21,13 +25,13 @@ export const singleUser = async (req, res) => {
         res.json(response);
     } catch (error) {
         res.json({ msg: error.message })
-        
+
     }
 }
 
 export const getUserID = async (req, res) => {
 
-    if(!req.body.name || !req.body.password) return res.json({msg:"Name and password are required ."})
+    if (!req.body.name || !req.body.password) return res.json({ msg: "Name and password are required ." })
     try {
         const response = await Users.findOne({
             attributes: ['id'],
