@@ -1,4 +1,3 @@
-import Users from "../models/UserModel.js"
 import db from "../config/DB.js";
 
 export const getUsers = async (req, res) => {
@@ -23,6 +22,7 @@ export const singleUser = async (req, res) => {
             WHERE id = ${req.params.id}
         `;
         const [response] = await db.query(selectQuery);
+        if(response.length === 0) return res.status(404).json({msg : "User not found ."}) 
         res.status(200).json(response[0]);
     } catch (error) {
         res.status(500).json({ msg: error.message });

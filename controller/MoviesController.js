@@ -1,46 +1,50 @@
 import Movie from "../models/MovieModel.js";
 import cloudinary from "../config/Cloudinary.js";
+import db from "../config/DB.js";
 
 
 export const getMovies = async (req, res) => {
     try {
-        const response = await Movie.findAll();
-        res.json(response);
+        const selectQuery = `
+            SELECT * 
+            FROM movies
+        `;
+        const [response] = await db.query(selectQuery);
+        res.status(200).json(response);
     } catch (error) {
-        console.log(error);
+        res.status(500).json({ msg: error.message });
     }
 }
 
 export const singleMovie = async (req, res) => {
 
     try {
-        const response = await Movie.findOne({
-            where: {
-                id: req.params.id
-            }
-        });
-        res.json(response);
+        const selectQuery = `
+            SELECT * 
+            FROM movies
+            WHERE id = ${req.params.id}
+        `;
+        const [response] = await db.query(selectQuery);
+        if (response.length === 0) return res.status(404).json({ msg: "Movie not found ." })
+        res.status(200).json(response[0]);
     } catch (error) {
-        res.json({ msg: error.message })
+        res.status(500).json({ msg: error.message });
     }
 }
 
 export const saveMovie = async (req, res) => {
     try {
-        if (!req.body) return res.json({ msg: "Please provide some information about the movie." });
-        if (!req.body.title) return res.json({ msg: "Title is required." });
-        if (!req.body.description) return res.json({ msg: "Description is required." });
-        if (req.body.description.length > 340) return res.json({ msg: `The description length must be less than 340 characters. length of your description is ${req.body.description.length}` });
-        if (!req.body.genre) return res.json({ msg: "Genre is required." });
-        if (!req.body.releaseYear) return res.json({ msg: "Release year is required." });
-        if (!req.files || !req.files.file) return res.json({ msg: "You must select a poster." });
-
-        const { title, description, genre, releaseYear } = req.body;
+        if (!req.body) return res.status(400).json({ msg: "Please provide some information about the movie." });
+        if (!req.body.title) return res.status(400).json({ msg: "Title is required." });
+        if (!req.body.description) return res.status(400).json({ msg: "Description is required." });
+        if (req.body.description.length > 340) return res.status(400).json({ msg: `The description length must be less than 340 characters. length of your description is ${req.body.description.length}` });
+        if (!req.body.genre) return res.status(400).json({ msg: "Genre is required." });
+        if (!req.body.release_year) return res.status(400).json({ msg: "Release year is required." });
+        if (!req.files || !req.files.file) return res.status(400).json({ msg: "You must select a poster." });
+        const { title, description, genre, release_year } = req.body;
         const file = req.files.file;
         const fileSize = file.data.length;
-
         if (fileSize > 5 * 1024 * 1024) return res.status(400).json({ msg: "The image size is larger than 5 MB." });
-
         const dateNow = Date.now().toString();
         const uploadResult = await cloudinary.uploader.upload(
             file.tempFilePath,
@@ -54,17 +58,14 @@ export const saveMovie = async (req, res) => {
             fetch_format: "auto",
             quality: "auto",
         });
-        await Movie.create({
-            title,
-            description,
-            genre,
-            releaseYear,
-            imageUrl: optimizeUrl
-        });
-        return res.json({ msg: "The movie was added successfully." });
+        const insertQuery = `
+            INSERT INTO movies (title, description, genre, release_year, image_url )
+            VALUES ('${title}', '${description}', '${genre}', '${release_year}' , '${optimizeUrl}' )
+        `;
+        await db.query(insertQuery);
+        return res.status(201).json({ msg: "The movie was added successfully." });
     } catch (err) {
-        console.error(err);
-        return res.json({ msg: err.message });
+        return res.status(500).json({ msg: err.message });
     }
 }
 
