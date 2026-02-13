@@ -23,28 +23,12 @@ export const singleUser = async (req, res) => {
             WHERE id = ${req.params.id}
         `;
         const [response] = await db.query(selectQuery);
-        res.status(200).json(response);
+        res.status(200).json(response[0]);
     } catch (error) {
         res.status(500).json({ msg: error.message });
     }
 }
 
-// export const getUserID = async (req, res) => {
-
-//     if (!req.body.name || !req.body.password) return res.json({ msg: "Name and password are required ." })
-//     try {
-//         const response = await Users.findOne({
-//             attributes: ['id'],
-//             where: {
-//                 name: req.body.name,
-//                 password: req.body.password
-//             }
-//         });
-//         res.json(response);
-//     } catch (error) {
-//         res.json({ msg: error.message })
-//     }
-// }
 
 export const saveUser = async (req, res) => {
     if (!req.body) return res.status(400).json({ msg: "Please send some information about youeself ." })
@@ -89,59 +73,35 @@ export const saveUser = async (req, res) => {
 }
 
 export const updateUser = async (req, res) => {
-
-    const user = await Users.findOne({
-        where: {
-            id: req.params.id
-        }
-    });
-    if (!user) return res.json({ msg: "The user was not found." });
-
-    let name = ""
-    let password = ""
-    let age = ""
-    let nationality = ""
-    let url = ""
-
-    if (req.body.name == "") {
-        name = user.name
-    } else {
-        name = req.body.name;
-    }
-
-    if (req.body.password == "") {
-        password = user.password
-    } else {
-        password = req.body.password;
-    }
-
-    if (req.body.age == "") {
-        age = user.age
-    } else {
-        age = req.body.age;
-    }
-
-    if (req.body.nationality == "") {
-        nationality = user.nationality
-    } else {
-        nationality = req.body.nationality;
-    }
-
-    if (req.body.url == "") {
-        url = user.url
-    } else {
-        url = req.body.url;
-    }
-
     try {
-        await Users.update({ name: name, age: age, nationality: nationality, url: url, password: password }, {
-            where: {
-                id: req.params.id
-            }
-        });
-        res.json({ msg: "The user was update successfully." });
+        if (!req.body) return res.status(400).json({ msg: "Please send some information about yourself." });
+        const selectQuery = `
+            SELECT * 
+            FROM users
+            WHERE id = ${req.params.id}
+        `;
+        const [user] = await db.query(selectQuery);
+        if (!user[0]) return res.status(404).json({ msg: "The user was not found." });
+        const user_name = req.body.username !== undefined ? req.body.username : user[0].username;
+        const password = req.body.password !== undefined ? req.body.password : user[0].password;
+        const birth_date = req.body.birth_date !== undefined ? req.body.birth_date : user[0].birth_date;
+        const nationality = req.body.nationality !== undefined ? req.body.nationality : user[0].nationality;
+        const url = (req.body.url !== undefined ? req.body.url : (user[0].url ? user[0].url : null));
+
+        const updateQuery = `
+                    UPDATE users
+                    SET
+                        username = "${user_name}",
+                        password = "${password}",
+                        birth_date = "${birth_date}",
+                        nationality = "${nationality}",
+                        url = "${url}"
+                    WHERE id = ${req.params.id}
+                `;
+        await db.query(updateQuery);
+        res.status(200).json({ msg: "The user was updated successfully." });
     } catch (err) {
-        res.json({ msg: err.message })
+        res.status(500).json({ msg: err.message })
     }
 }
 
