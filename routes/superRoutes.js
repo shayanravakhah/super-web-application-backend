@@ -1,5 +1,5 @@
 import express from "express";
-import { getUsers, singleUser, saveUser, updateUser, deleteUser, getUserID } from "../controller/UsersController.js";
+import { getUsers, singleUser, saveUser, updateUser, deleteUser /* , getUserID */ } from "../controller/UsersController.js";
 import { deleteMovie, getMovies, saveMovie, singleMovie, updateMovie } from "../controller/MoviesController.js";
 import { deleteShowTime, getShowTimes, getSingleShowTime, getUsersShowtimes, saveShowTime,  updateShowTime } from "../controller/ShowtimeController.js";
 import { deleteReserve, getReserve, getShowtimeReserve, saveReserve, updateReserve, updateVote } from "../controller/ReservationController.js";
@@ -33,10 +33,10 @@ router.put("/reservation/:id", updateReserve)
 router.delete("/reservation/:id", deleteReserve)
 
 
-router.get("/reservation/:id", getShowtimeReserve)
-router.post("/reservation/:id" , updateVote)
-router.post("/users-showtimes" , getUsersShowtimes)
-router.post("/userID", getUserID)
+// router.get("/reservation/:id", getShowtimeReserve)
+// router.post("/reservation/:id" , updateVote)
+// router.post("/users-showtimes" , getUsersShowtimes)
+// router.post("/userID", getUserID)
 
 
 
