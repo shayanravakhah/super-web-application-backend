@@ -78,7 +78,7 @@ export const saveUser = async (req, res) => {
         if (checkUsername.length > 0) return res.status(409).json({ msg: "This username is already taken." });
 
         const insertQuery = `
-            INSERT INTO users (user_name, password, birth_date, email, nationality , url)
+            INSERT INTO users (username, password, birth_date, email, nationality , url)
             VALUES ('${user_name}', '${password}', '${birth_date}', '${email}' , '${nationality}' , '${url}')
         `;
         await db.query(insertQuery);
