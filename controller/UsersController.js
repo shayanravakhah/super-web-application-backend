@@ -82,7 +82,7 @@ export const updateUser = async (req, res) => {
         `;
         const [user] = await db.query(selectQuery);
         if (!user[0]) return res.status(404).json({ msg: "The user was not found." });
-        const user_name = req.body.username !== undefined ? req.body.username : user[0].username;
+        const user_name = req.body.user_name !== undefined ? req.body.user_name : user[0].username;
         const password = req.body.password !== undefined ? req.body.password : user[0].password;
         const birth_date = req.body.birth_date !== undefined ? req.body.birth_date : user[0].birth_date;
         const nationality = req.body.nationality !== undefined ? req.body.nationality : user[0].nationality;
@@ -106,24 +106,22 @@ export const updateUser = async (req, res) => {
 }
 
 export const deleteUser = async (req, res) => {
-
-    const response = await Users.findOne({
-        where: {
-            id: req.params.id
-        }
-    });
-
-    if (!response) return res.json({ msg: "The user was not found." });
-
     try {
-        await Users.destroy({
-            where: {
-                id: req.params.id
-            }
-        });
-        res.json({ msg: "The user was delete successfully ." });
+        const selectQuery = `
+            SELECT * 
+            FROM users
+            WHERE id = ${req.params.id}
+        `;
+        const [user] = await db.query(selectQuery);
+        if (!user[0]) return res.status(404).json({ msg: "The user was not found." });
+        const removeQuery = `
+            DELETE FROM users 
+            WHERE id = ${req.params.id}
+        `;
+        await db.query(removeQuery);
+        res.status(200).json({ msg: "The user was deleted successfully ." });
     } catch (error) {
-        res.json({ msgd: error.message });;
+        res.status(500).json({ msg: error.message });;
     }
 }
 
