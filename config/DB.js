@@ -11,20 +11,3 @@ const db = new Sequelize(
   }
 );
 export default db;
-
-
-// const db = new Sequelize(
-//   "super_web_app",
-//   "root",
-//   "Shayan$$%%",
-//   {
-//     host: "localhost",
-//     dialect: "mysql",
-//     timezone: '+03:30'
-//   }
-// );
-// export default db;
-
-
-
-
