@@ -87,7 +87,6 @@ export const updateUser = async (req, res) => {
         const birth_date = req.body.birth_date !== undefined ? req.body.birth_date : user[0].birth_date;
         const nationality = req.body.nationality !== undefined ? req.body.nationality : user[0].nationality;
         const url = (req.body.url !== undefined ? req.body.url : (user[0].url ? user[0].url : null));
-
         const updateQuery = `
                     UPDATE users
                     SET

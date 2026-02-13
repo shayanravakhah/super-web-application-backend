@@ -71,27 +71,24 @@ export const saveMovie = async (req, res) => {
 
 export const deleteMovie = async (req, res) => {
     try {
-        const response = await Movie.findOne({
-            where: {
-                id: req.params.id
-            }
-        });
-        if (!response) return res.json({ msg: "The movie was not found." });
-
-        const fileName = response.imageUrl.split("/").pop().split("?")[0];
-        await cloudinary.uploader.destroy(`movies/${fileName}`);
-
-        const deletedCount = await Movie.destroy({
-            where: {
-                id: req.params.id
-            }
-        });
-        if (!(deletedCount > 0)) {
-            return res.json({ msg: "Failed to delete the movie." });
-        }
-        res.json({ msg: "The product was deleted successfully ." });
+        const selectQuery = `
+            SELECT * 
+            FROM movies
+            WHERE id = ${req.params.id}
+        `;
+        const [response] = await db.query(selectQuery);
+        if (response.length === 0) return res.status(404).json({ msg: "The movie was not found." });
+        const fileName = response[0].image_url.split("/").pop().split("?")[0];
+        const deleteCloudinaryResponse = await cloudinary.uploader.destroy(`movies/${fileName}`);
+        if (deleteCloudinaryResponse.result !== "ok") return res.status(500).json({ msg: "Failed to delete the image from Cloudinary." })
+        const removeQuery = `
+            DELETE FROM movies 
+            WHERE id = ${req.params.id}
+        `;
+        await db.query(removeQuery);
+        res.status(200).json({ msg: "The movie was deleted successfully ." });
     } catch (error) {
-        res.json({ msg: error.message });;
+        res.status(500).json({ msg: error.message });;
     }
 }
 
@@ -99,57 +96,27 @@ export const updateMovie = async (req, res) => {
     try {
         if (req.body) {
             if (req.body.description != null) {
-                if (req.body.description.length > 340) return res.json({ msg: `The description length must be less than 340 characters. length of your description is ${req.body.description.length}` });
+                if (req.body.description.length > 340) return res.status(400).json({ msg: `The description length must be less than 340 characters. length of your description is ${req.body.description.length}` });
             }
         }
-        const movie = await Movie.findOne({
-            where: {
-                id: req.params.id
-            }
-        });
-        if (!movie) return res.json({ msg: "The movie was not found." });
-
-        let title = movie.title;
-        let description = movie.description;
-        let genre = movie.genre;
-        let releaseYear = movie.releaseYear;
-        let optimizeUrl = movie.imageUrl;
-
-        if (req.body) {
-            if (req.body.title == null) {
-                title = movie.title
-            } else {
-                title = req.body.title;
-            }
-
-            if (req.body.description == null) {
-                description = movie.description
-            } else {
-                description = req.body.description;
-            }
-
-            if (req.body.genre == null) {
-                genre = movie.genre
-            } else {
-                genre = req.body.genre;
-            }
-
-            if (!req.body.releaseYear) {
-                releaseYear = movie.releaseYear
-            } else {
-                releaseYear = Number(req.body.releaseYear);
-            }
-        }
-        if (!req.files) {
-            optimizeUrl = movie.imageUrl;
-        } else {
+        const selectQuery = `
+            SELECT * 
+            FROM movies
+            WHERE id = ${req.params.id}
+        `;
+        const [movie] = await db.query(selectQuery);
+        if (!movie[0]) return res.status(404).json({ msg: "The movie was not found." });
+        let title = req.body.title || movie[0].title;
+        let description = req.body.description || movie[0].description;
+        let genre = req.body.genre || movie[0].genre;
+        let release_year = req.body.release_year || movie[0].release_year;
+        let optimizeUrl = movie[0].image_url
+        if (req.files && req.files.file) {
             const file = req.files.file;
             const fileSize = file.data.length
-            if (fileSize > 5000000) return res.json({ msg: "The image size is larger than 5 MB." });
-
-            const fileName = movie.imageUrl.split("/").pop().split("?")[0];
+            if (fileSize > 5000000) return res.status(400).json({ msg: "The image size is larger than 5 MB." });
+            const fileName = movie[0].image_url.split("/").pop().split("?")[0];
             await cloudinary.uploader.destroy(`movies/${fileName}`);
-
             const dateNow = Math.round(Date.now());
             const uploadResult = await cloudinary.uploader.upload(
                 file.tempFilePath,
@@ -158,24 +125,26 @@ export const updateMovie = async (req, res) => {
                     public_id: dateNow
                 }
             );
-
-            if (!uploadResult) return res.json({ msg: "Image upload failed." });
-
+            if (!uploadResult) return res.status(500).json({ msg: "Image upload failed." });
             optimizeUrl = cloudinary.url(`movies/${dateNow}`, {
                 fetch_format: "auto",
                 quality: "auto",
             });
         }
-        await Movie.update({
-            title: title, description: description, genre: genre, releaseYear: releaseYear, imageUrl: optimizeUrl
-        }, {
-            where: {
-                id: req.params.id
-            }
-        });
-        res.json({ msg: "The Movie was update successfully." });
+        const updateQuery = `
+                    UPDATE movies
+                    SET
+                        title = "${title}",
+                        description = "${description}",
+                        genre = "${genre}",
+                        release_year = ${release_year},
+                        image_url = "${optimizeUrl}"
+                    WHERE id = ${req.params.id}
+                `;
+        await db.query(updateQuery);
+        res.status(200).json({ msg: "The movie was updated successfully." });
     } catch (err) {
-        res.json({ msg: err.message })
+        res.status(500).json({ msg: err.message })
     }
 }
 
