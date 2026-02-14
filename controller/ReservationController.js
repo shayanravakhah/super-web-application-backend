@@ -39,7 +39,7 @@ export const saveReserve = async (req, res) => {
         if (!req.body.user_id) return res.status(400).json({ msg: "User ID is required." });
         if (!req.body.showtime_id) return res.status(400).json({ msg: "Showtime ID is required." });
         if (!req.body.seat_number) return res.status(400).json({ msg: "Seat number is required." });
-        if (!Number.isInteger(req.body.seat_number) || req.body.seat_number <= 0) res.status(400).json({ msg: "Seat number is Invalid ." });
+        if (!Number.isInteger(Number(req.body.seat_number)) || req.body.seat_number <= 0) return res.status(400).json({ msg: "Seat number is Invalid ." });
         const { user_id, showtime_id, seat_number } = req.body;
         const selectUserQuery = `
             SELECT * 
