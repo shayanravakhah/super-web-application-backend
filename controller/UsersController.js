@@ -20,13 +20,12 @@ export const getUserByUsernamePassword = async (req, res) => {
             FROM users
             WHERE username = "${req.body.user_name}" AND password = "${req.body.password}"
         `;
-        const [user] = db.query(selectQuery);
+        const [user] =await db.query(selectQuery);
         if(user.length === 0) return res.status(404).json({msg:"The user not found ."});
         res.status(200).json(user[0]);
     } catch (error) {
         res.status(500).json({msg:error.message});
     }
-
 }
 
 export const getSingleUser = async (req, res) => {
