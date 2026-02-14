@@ -112,14 +112,14 @@ export const updateVote = async (req, res) => {
         `;
         const [reserve] = await db.query(selectQuery);
         if (reserve.length === 0) return res.status(404).json({ msg: "The reserve was not found." });
-        const selectShowtimeQuery = `
-            SELECT *
-            FROM showtimes AS s 
-            WHERE s.id = ${reserve[0].showtime_id}
-        `;
-        const [showtime] = await db.query(selectShowtimeQuery)
-        if (new Date(`${showtime[0].date}T${showtime[0].end_time}`) > new Date())
-            return res.status(409).json({ msg: "You can only vote after the movie is over." })
+        // const selectShowtimeQuery = `
+        //     SELECT *
+        //     FROM showtimes AS s 
+        //     WHERE s.id = ${reserve[0].showtime_id}
+        // `;
+        // const [showtime] = await db.query(selectShowtimeQuery)
+        // if (new Date(`${showtime[0].date}T${showtime[0].end_time}`) > new Date())
+        //     return res.status(409).json({ msg: "You can only vote after the movie is over." })
         const selectMovieQuery = `
             SELECT m.* 
             FROM showtimes AS s 
@@ -164,7 +164,7 @@ export const deleteReserve = async (req, res) => {
         const selectQuery = `
             SELECT s.date AS date
             FROM reservations AS r INNER JOIN showtimes AS s ON r.showtime_id = s.id
-            WHERE id = ${req.params.id}
+            WHERE r.id = ${req.params.id}
         `;
         const [response] = await db.query(selectQuery);
         if (response.length === 0) return res.status(404).json({ msg: "You cannot cancel your reservation. The session time has passed." });
