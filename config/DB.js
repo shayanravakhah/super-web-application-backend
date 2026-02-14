@@ -1,15 +1,13 @@
-import { Sequelize } from "sequelize";
+import mysql from "mysql2/promise";
 
-const db = new Sequelize(
-  process.env.MYSQL_DATABASE,
-  process.env.MYSQLUSER,
-  process.env.MYSQL_ROOT_PASSWORD,
-  {
-    host: process.env.MYSQLHOST,
-    port: process.env.MYSQLPORT,
-    dialect: "mysql",
-  }
-);
+const db = await mysql.createPool({
+  host: process.env.MYSQLHOST,
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQL_ROOT_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  port: Number(process.env.MYSQLPORT),
+});
+
 export default db;
 
 // mysql -h shortline.proxy.rlwy.net -u root -p  --port 18971 --protocol=TCP railway
