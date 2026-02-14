@@ -2,137 +2,99 @@ import db from "../config/DB.js";
 import Movie from "../models/MovieModel.js";
 import Reservation from "../models/ReservationModel.js";
 import Showtime from "../models/ShowtimeModel.js";
-import Users from "../models/UserModel.js";
 
 
-
-
-export const getReserve = async (req, res) => {
+export const getReserveByUserID = async (req, res) => {
     try {
-        const response = await Reservation.findAll();
-        res.json(response);
+        const selectQuery = `
+            SELECT r.* ,
+            s.date AS date ,s.start_time AS start_time , s.end_time AS end_time , s.price AS price,
+            m.title AS title , m.description AS description ,m.genre AS genre , m.release_year AS release_year ,
+            m.rating AS rating ,m.rating_count AS rating_count , m.image_url AS image_url
+            FROM reservations AS r INNER JOIN showtimes AS s ON r.showtime_id = s.id INNER JOIN movies AS m ON m.id = s.movie_id 
+            WHERE r.user_id = ${req.params.id}
+            ORDER BY r.booking_time DESC
+        `;
+        const [response] = await db.query(selectQuery);
+        res.status(200).json(response);
     } catch (error) {
-        console.log(error);
+        res.status(500).json({ msg: error.message });
     }
 }
 
-export const singleReserve = async (req, res) => {
-
+export const getSingleReserve = async (req, res) => {
     try {
-        const response = await Reservation.findOne({
-            where: {
-                id: req.params.id
-            }
-        });
-        res.json(response);
+        const selectQuery = `
+            SELECT *
+            FROM reservations
+            WHERE id = ${req.params.id}
+        `;
+        const [response] = await db.query(selectQuery);
+        if (response.length === 0) return res.status(404).json({ msg: "The reservation not found ." });
+        res.status(200).json(response[0]);
     } catch (error) {
-        res.json({ msg: error.message })
+        res.status(500).json({ msg: error.message });
     }
 }
 
-export const getShowtimeReserve = async (req, res) => {
-    try {
-        const response = await Reservation.findAll({
-            where: {
-                showtime_id: req.params.id
-            }
-        });
-        res.json(response);
-    } catch (error) {
-        res.json({ msg: error.message })
-    }
-
-}
 
 export const saveReserve = async (req, res) => {
-    if (!req.body.user_id) return res.status(400).json({ msg: "User ID is required." });
-    if (!req.body.showtime_id) return res.status(400).json({ msg: "Showtime ID is required." });
-    if (!req.body.seat_number) return res.status(400).json({ msg: "Seat number is required." });
-    if (!req.body.booking_time) return res.status(400).json({ msg: "Booking time is required." });
-
-    const user_id = req.body.user_id;
-    const showtime_id = req.body.showtime_id;
-    const seat_number = req.body.seat_number;
-    const booking_time = req.body.booking_time;
     try {
-        await db.transaction(async (t) => {
-            const existing = await Reservation.findOne({
-                where: { showtime_id, seat_number },
-                transaction: t
-            });
-            if (existing) throw new Error("This seat is already booked.");
-
-            const showtime = await Showtime.findOne({
-                where: { id: showtime_id },
-                transaction: t
-            });
-            if (!showtime) throw new Error("Showtime not found.");
-            if (showtime.available_seats <= 0) throw new Error("No available seats.");
-
-            await Reservation.create(
-                { user_id, seat_number, showtime_id, booking_time },
-                { transaction: t }
-            );
-
-            await Showtime.update(
-                { available_seats: showtime.available_seats - 1 },
-                { where: { id: showtime_id }, transaction: t }
-            );
-        });
-
-        res.status(200).json({ msg: "Reservation was successful." });
-    } catch (err) {
-        res.status(400).json({ msg: err.message });
-    }
-}
-
-export const updateReserve = async (req, res) => {
-
-    const reserve = await Reservation.findOne({
-        where: {
-            id: req.params.id
+        if (!req.body.user_id) return res.status(400).json({ msg: "User ID is required." });
+        if (!req.body.showtime_id) return res.status(400).json({ msg: "Showtime ID is required." });
+        if (!req.body.seat_number) return res.status(400).json({ msg: "Seat number is required." });
+        if (!Number.isInteger(req.body.seat_number) || req.body.seat_number <= 0) res.status(400).json({ msg: "Seat number is Invalid ." });
+        const { user_id, showtime_id, seat_number } = req.body;
+        const selectUserQuery = `
+            SELECT * 
+            FROM users
+            WHERE id = ${user_id}
+        `;
+        const [user] = await db.query(selectUserQuery);
+        if (user.length === 0) return res.status(404).json({ msg: "The user not found ." });
+        const conn = await db.getConnection();
+        await conn.beginTransaction();
+        const selectShowtimeQuery = `
+            SELECT * 
+            FROM showtimes
+            WHERE id = ${showtime_id}
+            FOR UPDATE
+        `;
+        const [showtime] = await conn.query(selectShowtimeQuery);
+        if (showtime.length === 0) {
+            await conn.rollback();
+            return res.status(404).json({ msg: "The showtime not found ." });
         }
-    });
-    if (!reserve) return res.json({ msg: "The reserve was not found." });
+        if (showtime[0].available_seats === 0) {
+            await conn.rollback();
+            return res.status(409).json({ msg: "No available seats for this showtime." });
+        }
+        const selectReserveQuery = `
+            SELECT * 
+            FROM reservations
+            WHERE showtime_id = ${showtime_id} AND seat_number = ${seat_number}
+        `;
+        const [reservation] = await conn.query(selectReserveQuery);
+        if (reservation.length > 0) {
+            await conn.rollback();
+            return res.status(409).json({ msg: "This seat is already booked." });
+        }
+        const insertQuery = `
+            INSERT INTO reservations (user_id, showtime_id, seat_number)
+            VALUES (${user_id}, ${showtime_id}, ${seat_number} )
+        `;
+        await conn.query(insertQuery);
 
-    let user_id = "";
-    let showtime_id = "";
-    let seat_number = "";
-    let booking_time = "";
-
-    if (!req.body.user_id) {
-        user_id = reserve.user_id
-    } else {
-        user_id = req.body.user_id;
-    }
-
-    if (!req.body.showtime_id) {
-        showtime_id = reserve.showtime_id
-    } else {
-        showtime_id = req.body.showtime_id;
-    }
-
-    if (!req.body.seat_number) {
-        seat_number = reserve.seat_number
-    } else {
-        seat_number = req.body.seat_number;
-    }
-
-    if (!req.body.booking_time) {
-        booking_time = reserve.booking_time
-    } else {
-        booking_time = req.body.booking_time;
-    }
-
-    try {
-        await Reservation.update({ user_id: user_id, seat_number: seat_number, showtime_id: showtime_id, booking_time: booking_time }, {
-            where: {
-                id: req.params.id
-            }
-        });
-        res.json({ msg: "The reserve was update successfully." });
+        const updateQuery = `
+            UPDATE showtimes
+                SET available_seats = ${showtime[0].available_seats - 1}
+            WHERE id = ${showtime_id}
+        `;
+        await conn.query(updateQuery);
+        await conn.commit();
+        res.status(201).json({ msg: "Reservation was successful." });
     } catch (err) {
-        res.json({ msg: err.message })
+        res.status(500).json({ msg: err.message });
     }
 }
 
@@ -222,6 +184,3 @@ export const deleteReserve = async (req, res) => {
         res.json({ msgd: error.message });;
     }
 }
-
-//  نیاز هست که یه تابع برای رای گیری هم اضافه شه که اول چک کنه کاربر خرید کرده و سپس در جدول فیلم ذخیره شه و همچنین برای اپدیت هم برای گذاشته شه و بعد پایان فیلم حتما
-// کم کردن تعدادصندلی در نمایش

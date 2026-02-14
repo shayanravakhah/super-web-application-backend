@@ -13,7 +13,7 @@ export const getUsers = async (req, res) => {
     }
 }
 
-export const singleUser = async (req, res) => {
+export const getSingleUser = async (req, res) => {
 
     try {
         const selectQuery = `

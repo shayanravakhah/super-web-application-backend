@@ -15,7 +15,7 @@ export const getMovies = async (req, res) => {
     }
 }
 
-export const singleMovie = async (req, res) => {
+export const getSingleMovie = async (req, res) => {
 
     try {
         const selectQuery = `

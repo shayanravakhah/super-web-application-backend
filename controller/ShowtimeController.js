@@ -1,5 +1,4 @@
 import db from "../config/DB.js";
-import Showtime from "../models/ShowtimeModel.js";
 
 
 export const getShowTimes = async (req, res) => {
@@ -34,36 +33,6 @@ export const getSingleShowTime = async (req, res) => {
         res.status(500).json({ msg: error.message });
     }
 }
-
-// export const getUsersShowtimes = async (req, res) => {
-//     try {
-
-//         const selectQuery = `
-//             SELECT * 
-//             FROM users
-//             WHERE id = ${req.params.id}
-//         `;
-//         const [user] = await db.query(selectQuery);
-//         if (!user[0]) return res.status(404).json({ msg: "User not found" });
-
-//         const reservations = await Reservation.findAll({
-//             attributes: ['id', 'seat_number', 'rate', 'showtime_id'],
-//             where: {
-//                 user_id: user.id
-//             },
-//             include: [
-//                 {
-//                     model: Showtime
-//                 }
-//             ]
-//         });
-
-//         return res.json(reservations);
-
-//     } catch (error) {
-//         res.status(500).json({ msg: error.message });
-//     }
-// }
 
 export const saveShowTime = async (req, res) => {
     try {
@@ -124,13 +93,14 @@ export const updateShowTime = async (req, res) => {
              WHERE id = ${movie_id} 
         `;
         const [movie] = await db.query(selectMovieQuery);
-        if (movie.length === 0) return res.status(404).json({ msg: "Movie not found ." })
+        if (movie.length === 0) return res.status(404).json({ msg: "Movie not found ." });
         if (isNaN(new Date(date))) return res.status(400).json({ msg: "Invalid date." });
         if (new Date(date) < new Date()) return res.status(400).json({ msg: "Date can't be in past ." });
         if (isNaN(new Date(`${date}T${start_time}`))) return res.status(400).json({ msg: "Invalid start time." });
         if (isNaN(new Date(`${date}T${end_time}`))) return res.status(400).json({ msg: "Invalid end time." });
         if (new Date(`${date}T${start_time}`) >= new Date(`${date}T${end_time}`))
             return res.status(400).json({ msg: "Start time must be earlier than end time." });
+        if (price <= 0) return res.status(400).json({ msg: "Price must be more than 0" });
         const updateQuery = `
                     UPDATE showtimes
                     SET
