@@ -112,13 +112,20 @@ export const updateVote = async (req, res) => {
         `;
         const [reserve] = await db.query(selectQuery);
         if (reserve.length === 0) return res.status(404).json({ msg: "The reserve was not found." });
+        const selectShowtimeQuery = `
+            SELECT *
+            FROM showtimes AS s 
+            WHERE s.id = ${reserve[0].showtime_id}
+        `;
+        const [showtime] = await db.query(selectShowtimeQuery)
+        if (new Date(`${showtime[0].date}T${showtime[0].end_time}`) > new Date())
+            return res.status(409).json({ msg: "You can only vote after the movie is over." })
         const selectMovieQuery = `
-            SELECT m.*
+            SELECT m.* 
             FROM showtimes AS s 
             INNER JOIN movies AS m ON s.movie_id = m.id
             WHERE s.id = ${reserve[0].showtime_id}
         `;
-
         const [movie] = await db.query(selectMovieQuery)
         let number = Number(movie[0].rating_count);
         const preRating = Number(movie[0].rating);
