@@ -61,7 +61,7 @@ export const saveReserve = async (req, res) => {
             await conn.rollback();
             return res.status(404).json({ msg: "The showtime not found ." });
         }
-        if (new Date(`${showtime[0].date}T${showtime[0].start_time}`) < new Date()) {
+        if (new Date(`${showtime[0].date.toISOString().split("T")[0]}T${showtime[0].start_time}`) < new Date()) {
             await conn.rollback();
             return res.status(409).json({ msg: "Reservation time has expired ." });
         }
@@ -118,7 +118,7 @@ export const updateVote = async (req, res) => {
             WHERE s.id = ${reserve[0].showtime_id}
         `;
         const [showtime] = await db.query(selectShowtimeQuery)
-        if (new Date(`${showtime[0].date}T${showtime[0].end_time}`) > new Date())
+        if (new Date(`${showtime[0].date.toISOString().split("T")[0]}T${showtime[0].end_time}`) > new Date())
             return res.status(409).json({ msg: "You can only vote after the movie is over." })
         const selectMovieQuery = `
             SELECT m.* 

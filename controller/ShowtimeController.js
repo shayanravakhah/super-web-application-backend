@@ -96,9 +96,9 @@ export const updateShowTime = async (req, res) => {
         if (movie.length === 0) return res.status(404).json({ msg: "Movie not found ." });
         if (isNaN(new Date(date))) return res.status(400).json({ msg: "Invalid date." });
         if (new Date(date) < new Date()) return res.status(400).json({ msg: "Date can't be in past ." });
-        if (isNaN(new Date(`${date}T${start_time}`))) return res.status(400).json({ msg: "Invalid start time." });
-        if (isNaN(new Date(`${date}T${end_time}`))) return res.status(400).json({ msg: "Invalid end time." });
-        if (new Date(`${date}T${start_time}`) >= new Date(`${date}T${end_time}`))
+        if (isNaN(new Date(`${date.toISOString().split("T")[0]}T${start_time}`))) return res.status(400).json({ msg: "Invalid start time." });
+        if (isNaN(new Date(`${date.toISOString().split("T")[0]}T${end_time}`))) return res.status(400).json({ msg: "Invalid end time." });
+        if (new Date(`${date.toISOString().split("T")[0]}T${start_time}`) >= new Date(`${date.toISOString().split("T")[0]}T${end_time}`))
             return res.status(400).json({ msg: "Start time must be earlier than end time." });
         if (price <= 0) return res.status(400).json({ msg: "Price must be more than 0" });
         const updateQuery = `
