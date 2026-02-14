@@ -105,10 +105,10 @@ export const updateMovie = async (req, res) => {
         `;
         const [movie] = await db.query(selectQuery);
         if (movie.length === 0) return res.status(404).json({ msg: "The movie was not found." });
-        let title = req.body && req.body.title || movie[0].title;
-        let description = req.body && req.body.description || movie[0].description;
-        let genre = req.body && req.body.genre || movie[0].genre;
-        let release_year = req.body && req.body.release_year || movie[0].release_year;
+        const title = req.body && req.body.title || movie[0].title;
+        const description = req.body && req.body.description || movie[0].description;
+        const genre = req.body && req.body.genre || movie[0].genre;
+        const release_year = req.body && req.body.release_year || movie[0].release_year;
         let optimizeUrl = movie[0].image_url
         if (req.files && req.files.file) {
             const file = req.files.file;

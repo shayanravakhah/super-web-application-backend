@@ -22,7 +22,7 @@ export const singleUser = async (req, res) => {
             WHERE id = ${req.params.id}
         `;
         const [response] = await db.query(selectQuery);
-        if(response.length === 0) return res.status(404).json({msg : "User not found ."}) 
+        if (response.length === 0) return res.status(404).json({ msg: "User not found ." })
         res.status(200).json(response[0]);
     } catch (error) {
         res.status(500).json({ msg: error.message });
@@ -75,6 +75,16 @@ export const saveUser = async (req, res) => {
 export const updateUser = async (req, res) => {
     try {
         if (!req.body) return res.status(400).json({ msg: "Please send some information about yourself." });
+        if (req.body.user_name) {
+            const checkUsernameQuery = `
+                SELECT * 
+                FROM users
+                WHERE username = "${user_name}"
+            `;
+            const [checkUsername] = await db.query(checkUsernameQuery);
+            if (checkUsername.length > 0) return res.status(409).json({ msg: "This username is already taken." });
+
+        }
         const selectQuery = `
             SELECT * 
             FROM users
@@ -82,6 +92,7 @@ export const updateUser = async (req, res) => {
         `;
         const [user] = await db.query(selectQuery);
         if (!user[0]) return res.status(404).json({ msg: "The user was not found." });
+
         const user_name = req.body.user_name !== undefined ? req.body.user_name : user[0].username;
         const password = req.body.password !== undefined ? req.body.password : user[0].password;
         const birth_date = req.body.birth_date !== undefined ? req.body.birth_date : user[0].birth_date;

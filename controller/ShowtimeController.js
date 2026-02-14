@@ -77,10 +77,9 @@ export const saveShowTime = async (req, res) => {
         if (movie.length === 0) return res.status(404).json({ msg: "this Movie does't exist." });
         if (!req.body.date) return res.status(400).json({ msg: "Date is required." });
         if (isNaN(new Date(req.body.date))) return res.status(400).json({ msg: "Invalid date." });
+        if (new Date(req.body.date) < new Date()) return res.json({ msg: "Date can't be in past ." });
         if (!req.body.start_time) return res.status(400).json({ msg: "Start time is required." });
         if (isNaN(new Date(`${req.body.date}T${req.body.start_time}`))) return res.status(400).json({ msg: "Invalid start time." });
-        const startDateTime = new Date(`${req.body.date}T${req.body.start_time}`);
-        if (startDateTime < new Date()) return res.status(400).json({ msg: "Showtime can't be in the past." });
         if (!req.body.end_time) return res.status(400).json({ msg: "End time is required." });
         if (isNaN(new Date(`${req.body.date}T${req.body.end_time}`))) return res.status(400).json({ msg: "Invalid end time." });
         if (new Date(`${req.body.date}T${req.body.start_time}`) >= new Date(`${req.body.date}T${req.body.end_time}`))
@@ -104,86 +103,61 @@ export const saveShowTime = async (req, res) => {
 }
 
 export const updateShowTime = async (req, res) => {
-
-    if (req.body.date) {
-        if (isNaN(new Date(req.body.date))) return res.json({ msg: "Invalid date." });
-        if (new Date(req.body.date) < new Date()) return res.json({ msg: "Date can't be in past ." });
-    }
-
-    const showtime = await Showtime.findOne({
-        where: {
-            id: req.params.id
-        }
-    });
-    if (!showtime) return res.json({ msg: "The showtime was not found." });
-
-    let movie_id = ""
-    let date = ""
-    let start_time = ""
-    let end_time = ""
-    let price = ""
-
-    if (req.body.movie_id == "") {
-        movie_id = showtime.movie_id;
-    } else {
-        movie_id = req.body.movie_id;
-    }
-
-    if (req.body.date == "") {
-        date = showtime.date
-    } else {
-        date = req.body.date;
-    }
-
-    if (req.body.start_time == "") {
-        start_time = showtime.start_time;
-    } else {
-        start_time = req.body.start_time;
-    }
-
-    if (req.body.end_time == "") {
-        end_time = showtime.end_time;
-    } else {
-        end_time = req.body.end_time;
-    }
-
-    if (req.body.price == "") {
-        price = showtime.price
-    } else {
-        price = req.body.price;
-    }
-
     try {
-        await Showtime.update({ movie_id: movie_id, date: date, start_time: start_time, end_time: end_time, price: price }, {
-            where: {
-                id: req.params.id
-            }
-        });
-        res.json({ msg: "The showtime was update successfully." });
+        if (!req.body) return res.status(400).json({ msg: "Please provide some information about the showtime ." })
+        if (req.body.date) {
+            if (isNaN(new Date(req.body.date))) return res.status(400).json({ msg: "Invalid date." });
+            if (new Date(req.body.date) < new Date()) return res.status(400).json({ msg: "Date can't be in past ." });
+        }
+        const selectQuery = `
+        SELECT *
+        FROM showtimes
+        WHERE id = ${req.params.id}
+        `;
+        const [showtime] = await db.query(selectQuery);
+        if (showtime.length === 0) return res.status(404).json({ msg: "The showtime was not found." });
+        const movie_id = req.body.movie_id || showtime[0].movie_id;
+        const date = req.body.date || showtime[0].date;
+        const start_time = req.body.start_time || showtime[0].start_time;
+        const end_time = req.body.end_time || showtime[0].end_time;
+        const price = req.body.price || showtime[0].price;
+        if (isNaN(new Date(`${req.body.date}T${req.body.start_time}`))) return res.status(400).json({ msg: "Invalid start time." });
+        if (isNaN(new Date(`${req.body.date}T${req.body.end_time}`))) return res.status(400).json({ msg: "Invalid end time." });
+        if (new Date(`${req.body.date}T${req.body.start_time}`) >= new Date(`${req.body.date}T${req.body.end_time}`))
+            return res.status(400).json({ msg: "Start time must be earlier than end time." });
+        const updateQuery = `
+                    UPDATE showtimes
+                    SET
+                        movie_id = ${movie_id},
+                        date = "${date}",
+                        start_time = "${start_time}",
+                        end_time = "${end_time}",
+                        price = ${price}
+                    WHERE id = ${req.params.id}
+                `;
+        await db.query(updateQuery);
+        res.status(200).json({ msg: "The showtime was updated successfully." });
     } catch (err) {
-        res.json({ msg: err.message })
+        res.status(500).json({ msg: err.message })
     }
 }
 
 export const deleteShowTime = async (req, res) => {
-
-    const response = await Showtime.findOne({
-        where: {
-            id: req.params.id
-        }
-    });
-
-    if (!response) return res.json({ msg: "The showtime was not found." });
-
     try {
-        await Showtime.destroy({
-            where: {
-                id: req.params.id
-            }
-        });
-        res.json({ msg: "The showtime was delete successfully ." });
+        const selectQuery = `
+        SELECT *
+        FROM showtimes
+        WHERE id = ${req.params.id}
+        `;
+        const [showtime] = await db.query(selectQuery);
+        if (showtime.length === 0) return res.status(404).json({ msg: "The showtime was not found." });
+        const removeQuery = `
+            DELETE FROM showtimes 
+            WHERE id = ${req.params.id}
+        `;
+        await db.query(removeQuery);
+        res.status(200).json({ msg: "The showtime was deleted successfully ." });
     } catch (error) {
-        res.json({ msgd: error.message });;
+        res.status(500).json({ msg: error.message });;
     }
 }
-
