@@ -1,8 +1,4 @@
 import db from "../config/DB.js";
-import Movie from "../models/MovieModel.js";
-import Reservation from "../models/ReservationModel.js";
-import Showtime from "../models/ShowtimeModel.js";
-
 
 export const getReserveByUserID = async (req, res) => {
     try {
@@ -99,88 +95,77 @@ export const saveReserve = async (req, res) => {
 }
 
 export const updateVote = async (req, res) => {
-
     try {
+        if (!req.body.vote) return res.status(400).json({ msg: "Please get your vote" });
+        let vote = Number(req.body.vote);
+        if (isNaN(vote)) return res.status(400).json({ msg: "Vote must be a number." });
+        vote = Number(vote.toFixed(1));
+        if (vote > 5 || vote < 0) return res.status(400).json({ msg: "Your vote must be between 0 and 5." });
+        const selectQuery = `
+            SELECT *
+            FROM reservations
+            WHERE id = ${req.params.id}
+        `;
+        const [reserve] = await db.query(selectQuery);
+        if (reserve.length === 0) return res.status(404).json({ msg: "The reserve was not found." });
+        const selectMovieQuery = `
+            SELECT m.*
+            FROM showtimes AS s 
+            INNER JOIN movies AS m ON s.movie_id = m.id
+            WHERE s.id = ${reserve[0].showtime_id}
+        `;
 
-        const vote = req.body.vote;
-        if (vote > 5 || vote < 0) return res.json({ msg: "Your vote must be between 0 and 5." })
-
-
-        const reserve = await Reservation.findOne({
-            where: {
-                id: req.params.id
-            }
-        });
-        if (!reserve) return res.json({ msg: "The reserve was not found." });
-
-        const movieID = await Showtime.findOne(
-            {
-                attributes: ['movie_id'],
-                where: {
-                    id: reserve.showtime_id
-                }
-            }
-        )
-
-        const movie = await Movie.findOne(
-            {
-                where: {
-                    id: movieID.movie_id
-                }
-            }
-        )
-        let number = Number(movie.ratingCount);
-        const preRating = Number(movie.rating);
+        const [movie] = await db.query(selectMovieQuery)
+        let number = Number(movie[0].rating_count);
+        const preRating = Number(movie[0].rating);
         let avg = 0
-        if (reserve.rate == null) {
+        if (reserve[0].rate == null) {
             avg = ((vote * 1) + (preRating * number)) / (number + 1)
             number = number + 1
-
         } else {
-            avg = ((preRating * number) + (vote - reserve.rate)) / number
+            avg = ((preRating * number) + (vote - reserve[0].rate)) / number
         }
+        const updateReserveQuery = `
+            UPDATE reservations
+                SET
+                    rate = ${vote}
+                WHERE id = ${req.params.id}
+        `;
+        await db.query(updateReserveQuery);
+        const updateMovieQuery = `
+            UPDATE movies
+                SET
+                    rating = ${avg},
+                    rating_count = ${number}
+                WHERE id = ${movie[0].id}
+        `;
+        await db.query(updateMovieQuery);
 
-
-        await Reservation.update({ rate: req.body.vote }, {
-            where: {
-                id: req.params.id
-            }
-        });
-
-        await Movie.update({
-            rating: avg.toFixed(3),
-            ratingCount: number
-        }, {
-            where: {
-                id: movieID.movie_id
-            }
-        });
-
-        res.json({ msg: "Your vote has been recorded successfully." });
+        res.status(200).json({ msg: "Your vote has been recorded successfully." });
     } catch (err) {
-        res.json({ msg: err.message })
+        res.status(500).json({ msg: err.message })
     }
 }
 
 
 export const deleteReserve = async (req, res) => {
-
-    const response = await Reservation.findOne({
-        where: {
-            id: req.params.id
-        }
-    });
-
-    if (!response) return res.json({ msg: "The reserve was not found." });
-
     try {
-        await Reservation.destroy({
-            where: {
-                id: req.params.id
-            }
-        });
-        res.json({ msg: "The reserve was delete successfully ." });
+        const selectQuery = `
+            SELECT s.date AS date
+            FROM reservations AS r INNER JOIN showtimes AS s ON r.showtime_id = s.id
+            WHERE id = ${req.params.id}
+        `;
+        const [response] = await db.query(selectQuery);
+        if (response.length === 0) return res.status(404).json({ msg: "The reserve was not found." });
+        if (new Date(response[0].date) < new Date())
+            return res.status(409).json({ msg: "Reservation deleted successfully." });
+        const removeQuery = `
+            DELETE FROM reservations
+            WHERE id = ${req.params.id}
+        `
+        await db.query(removeQuery)
+        res.status(200).json({ msg: "The reserve was delete successfully ." });
     } catch (error) {
-        res.json({ msgd: error.message });;
+        res.status(500).json({ msgd: error.message });;
     }
 }
