@@ -1,7 +1,7 @@
 import express from "express";
 import { getUsers, singleUser, saveUser, updateUser, deleteUser } from "../controller/UsersController.js";
 import { deleteMovie, getMovies, saveMovie, singleMovie, updateMovie } from "../controller/MoviesController.js";
-import { deleteShowTime, getShowTimes, getSingleShowTime, getUsersShowtimes, saveShowTime,  updateShowTime } from "../controller/ShowtimeController.js";
+import { deleteShowTime, getShowTimes, getSingleShowTime,  saveShowTime,  updateShowTime } from "../controller/ShowtimeController.js";
 import { deleteReserve, getReserve, getShowtimeReserve, saveReserve, updateReserve, updateVote } from "../controller/ReservationController.js";
 
 
