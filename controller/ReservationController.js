@@ -61,6 +61,10 @@ export const saveReserve = async (req, res) => {
             await conn.rollback();
             return res.status(404).json({ msg: "The showtime not found ." });
         }
+        if (new Date(`${showtime[0].date}T${showtime[0].start_time}`) < new Date()) {
+            await conn.rollback();
+            return res.status(409).json({ msg: "Reservation time has expired ." });
+        }
         if (showtime[0].available_seats === 0) {
             await conn.rollback();
             return res.status(409).json({ msg: "No available seats for this showtime." });
@@ -156,7 +160,7 @@ export const deleteReserve = async (req, res) => {
             WHERE id = ${req.params.id}
         `;
         const [response] = await db.query(selectQuery);
-        if (response.length === 0) return res.status(404).json({ msg: "The reserve was not found." });
+        if (response.length === 0) return res.status(404).json({ msg: "You cannot cancel your reservation. The session time has passed." });
         if (new Date(response[0].date) < new Date())
             return res.status(409).json({ msg: "Reservation deleted successfully." });
         const removeQuery = `
@@ -164,7 +168,7 @@ export const deleteReserve = async (req, res) => {
             WHERE id = ${req.params.id}
         `
         await db.query(removeQuery)
-        res.status(200).json({ msg: "The reserve was delete successfully ." });
+        res.status(200).json({ msg: "Reservation deleted successfully." });
     } catch (error) {
         res.status(500).json({ msgd: error.message });;
     }
