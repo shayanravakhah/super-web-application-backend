@@ -121,15 +121,15 @@ export const updateShowTime = async (req, res) => {
         const selectMovieQuery = `
             SELECT * 
             FROM movies
-             WHERE id = ${req.params.id} 
+             WHERE id = ${movie_id} 
         `;
         const [movie] = await db.query(selectMovieQuery);
         if (movie.length === 0) return res.status(404).json({ msg: "Movie not found ." })
-        if (isNaN(new Date(req.body.date))) return res.status(400).json({ msg: "Invalid date." });
-        if (new Date(req.body.date) < new Date()) return res.status(400).json({ msg: "Date can't be in past ." });
-        if (isNaN(new Date(`${req.body.date}T${req.body.start_time}`))) return res.status(400).json({ msg: "Invalid start time." });
-        if (isNaN(new Date(`${req.body.date}T${req.body.end_time}`))) return res.status(400).json({ msg: "Invalid end time." });
-        if (new Date(`${req.body.date}T${req.body.start_time}`) >= new Date(`${req.body.date}T${req.body.end_time}`))
+        if (isNaN(new Date(date))) return res.status(400).json({ msg: "Invalid date." });
+        if (new Date(date) < new Date()) return res.status(400).json({ msg: "Date can't be in past ." });
+        if (isNaN(new Date(`${date}T${start_time}`))) return res.status(400).json({ msg: "Invalid start time." });
+        if (isNaN(new Date(`${date}T${end_time}`))) return res.status(400).json({ msg: "Invalid end time." });
+        if (new Date(`${date}T${start_time}`) >= new Date(`${date}T${end_time}`))
             return res.status(400).json({ msg: "Start time must be earlier than end time." });
         const updateQuery = `
                     UPDATE showtimes
