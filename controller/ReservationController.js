@@ -112,14 +112,14 @@ export const updateVote = async (req, res) => {
         `;
         const [reserve] = await db.query(selectQuery);
         if (reserve.length === 0) return res.status(404).json({ msg: "The reserve was not found." });
-        // const selectShowtimeQuery = `
-        //     SELECT *
-        //     FROM showtimes AS s 
-        //     WHERE s.id = ${reserve[0].showtime_id}
-        // `;
-        // const [showtime] = await db.query(selectShowtimeQuery)
-        // if (new Date(`${showtime[0].date}T${showtime[0].end_time}`) > new Date())
-        //     return res.status(409).json({ msg: "You can only vote after the movie is over." })
+        const selectShowtimeQuery = `
+            SELECT *
+            FROM showtimes AS s 
+            WHERE s.id = ${reserve[0].showtime_id}
+        `;
+        const [showtime] = await db.query(selectShowtimeQuery)
+        if (new Date(`${showtime[0].date}T${showtime[0].end_time}`) > new Date())
+            return res.status(409).json({ msg: "You can only vote after the movie is over." })
         const selectMovieQuery = `
             SELECT m.* 
             FROM showtimes AS s 
@@ -162,14 +162,18 @@ export const updateVote = async (req, res) => {
 export const deleteReserve = async (req, res) => {
     try {
         const selectQuery = `
-            SELECT s.date AS date
+            SELECT s.date AS date 
             FROM reservations AS r INNER JOIN showtimes AS s ON r.showtime_id = s.id
             WHERE r.id = ${req.params.id}
         `;
         const [response] = await db.query(selectQuery);
-        if (response.length === 0) return res.status(404).json({ msg: "You cannot cancel your reservation. The session time has passed." });
-        if (new Date(response[0].date) < new Date())
-            return res.status(409).json({ msg: "Reservation deleted successfully." });
+        if (response.length === 0) return res.status(404).json({ msg: "Reservation not found ." });
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); 
+        const showDate = new Date(response[0].date);
+        showDate.setHours(0, 0, 0, 0); 
+        if (showDate <= today)
+            return res.status(409).json({ msg: "Cannot cancel reservation. Cancellation must be done before the show date." });
         const removeQuery = `
             DELETE FROM reservations
             WHERE id = ${req.params.id}
@@ -177,6 +181,6 @@ export const deleteReserve = async (req, res) => {
         await db.query(removeQuery)
         res.status(200).json({ msg: "Reservation deleted successfully." });
     } catch (error) {
-        res.status(500).json({ msgd: error.message });;
+        res.status(500).json({ msg: error.message });;
     }
 }
