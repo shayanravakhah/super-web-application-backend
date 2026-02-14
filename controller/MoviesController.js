@@ -1,4 +1,3 @@
-import Movie from "../models/MovieModel.js";
 import cloudinary from "../config/Cloudinary.js";
 import db from "../config/DB.js";
 
@@ -60,7 +59,7 @@ export const saveMovie = async (req, res) => {
         });
         const insertQuery = `
             INSERT INTO movies (title, description, genre, release_year, image_url )
-            VALUES ('${title}', '${description}', '${genre}', '${release_year}' , '${optimizeUrl}' )
+            VALUES ("${title}", "${description}", "${genre}", "${release_year}" , "${optimizeUrl}" )
         `;
         await db.query(insertQuery);
         return res.status(201).json({ msg: "The movie was added successfully." });

@@ -48,7 +48,7 @@ export const saveUser = async (req, res) => {
         const checkEmailQuery = `
             SELECT * 
             FROM users
-            WHERE email = '${email}'
+            WHERE email = "${email}"
         `;
         const [checkEmail] = await db.query(checkEmailQuery);
         if (checkEmail.length > 0) return res.status(409).json({ msg: "An account with this email already exists." });
@@ -56,14 +56,14 @@ export const saveUser = async (req, res) => {
         const checkUsernameQuery = `
                 SELECT * 
                 FROM users
-                WHERE username = '${user_name}'
+                WHERE username = "${user_name}"
             `;
         const [checkUsername] = await db.query(checkUsernameQuery);
         if (checkUsername.length > 0) return res.status(409).json({ msg: "This username is already taken." });
 
         const insertQuery = `
             INSERT INTO users (username, password, birth_date, email, nationality , url)
-            VALUES ('${user_name}', '${password}', '${birth_date}', '${email}' , '${nationality}' , '${url}')
+            VALUES ("${user_name}", "${password}", "${birth_date}", "${email}" , "${nationality}" , "${url}")
         `;
         await db.query(insertQuery);
         res.status(201).json({ msg: "The user was added successfully." });
