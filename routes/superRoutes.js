@@ -1,8 +1,8 @@
 import express from "express";
-import { getUsers, getSingleUser, saveUser, updateUser, deleteUser, getUserByUsernamePassword } from "../controller/UsersController.js";
+import { getUsers, getSingleUser, getUserByUsernamePassword, saveUser, updateUser, deleteUser } from "../controller/UsersController.js";
 import { getMovies, getSingleMovie, saveMovie, updateMovie, deleteMovie } from "../controller/MoviesController.js";
 import { getShowTimes, getSingleShowTime, saveShowTime, updateShowTime, deleteShowTime } from "../controller/ShowtimeController.js";
-import { getReserveByUserID, getSingleReserve, saveReserve, updateVote, deleteReserve } from "../controller/ReservationController.js";
+import { getReserveByUserID, getReserveByShowtimeID, getSingleReserve, saveReserve, updateVote, deleteReserve } from "../controller/ReservationController.js";
 
 
 const router = express.Router()
@@ -26,12 +26,13 @@ router.delete("/showtimes/:id", deleteShowTime)
 router.put("/showtimes/:id", updateShowTime)
 
 router.get("/users/:id/reservations", getReserveByUserID)
+router.get("/showtimes/:id/reservations", getReserveByShowtimeID)
 router.get("/reservation/:id", getSingleReserve)
 router.post("/reservation", saveReserve)
 router.put("/reservation/:id", updateVote)
 router.delete("/reservation/:id", deleteReserve)
 
-router.post("/login" , getUserByUsernamePassword)
+router.post("/login", getUserByUsernamePassword)
 
 
 

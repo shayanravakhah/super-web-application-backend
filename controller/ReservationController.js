@@ -18,6 +18,24 @@ export const getReserveByUserID = async (req, res) => {
     }
 }
 
+export const getReserveByShowtimeID = async (req, res) => {
+    try {
+        const selectQuery = `
+            SELECT r.* ,
+            s.date AS date ,s.start_time AS start_time , s.end_time AS end_time , s.price AS price,
+            m.title AS title , m.description AS description ,m.genre AS genre , m.release_year AS release_year ,
+            m.rating AS rating ,m.rating_count AS rating_count , m.image_url AS image_url
+            FROM reservations AS r INNER JOIN showtimes AS s ON r.showtime_id = s.id INNER JOIN movies AS m ON m.id = s.movie_id 
+            WHERE r.showtime_id = ${req.params.id}
+            ORDER BY r.booking_time DESC
+        `;
+        const [response] = await db.query(selectQuery);
+        res.status(200).json(response);
+    } catch (error) {
+        res.status(500).json({ msg: error.message });
+    }
+}
+
 export const getSingleReserve = async (req, res) => {
     try {
         const selectQuery = `
