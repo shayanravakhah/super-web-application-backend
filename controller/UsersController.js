@@ -94,7 +94,7 @@ export const updateUser = async (req, res) => {
             const checkUsernameQuery = `
                 SELECT * 
                 FROM users
-                WHERE username = "${user_name}"
+                WHERE username = "${req.body.user_name}"
             `;
             const [checkUsername] = await db.query(checkUsernameQuery);
             if (checkUsername.length > 0) return res.status(409).json({ msg: "This username is already taken." });
