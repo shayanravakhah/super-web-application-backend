@@ -7,9 +7,13 @@ export const getReserveByUserID = async (req, res) => {
             s.date AS date ,s.start_time AS start_time , s.end_time AS end_time , s.price AS price,
             m.title AS title , m.description AS description ,m.genre AS genre , m.release_year AS release_year ,
             m.rating AS rating ,m.rating_count AS rating_count , m.image_url AS image_url
+<<<<<<< HEAD
             FROM reservations AS r
             INNER JOIN showtimes AS s ON r.showtime_id = s.id 
             INNER JOIN movies AS m ON m.id = s.movie_id 
+=======
+            FROM reservations AS r INNER JOIN showtimes AS s ON r.showtime_id = s.id INNER JOIN movies AS m ON m.id = s.movie_id 
+>>>>>>> 70eab98d2d6080f2dbbd78e48bb57e5207dbe045
             WHERE r.user_id = ${req.params.id}
             ORDER BY r.booking_time DESC
         `;
