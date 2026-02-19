@@ -122,7 +122,8 @@ export const saveReserve = async (req, res) => {
             );
         } catch (emailError) {
             console.log("Email failed:", emailError.message);
-        } res.status(201).json({ msg: "Reservation was successful." });
+        } 
+        res.status(201).json({ msg: "Reservation was successful." });
     } catch (err) {
         res.status(500).json({ msg: err.message });
     }
