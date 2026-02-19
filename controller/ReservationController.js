@@ -1,4 +1,5 @@
 import db from "../config/DB.js";
+import { sendReservationEmail } from "../config/Email.js";
 
 export const getReserveByUserID = async (req, res) => {
     try {
@@ -112,7 +113,16 @@ export const saveReserve = async (req, res) => {
         `;
         await conn.query(updateQuery);
         await conn.commit();
-        res.status(201).json({ msg: "Reservation was successful." });
+        try {
+            await sendReservationEmail(
+                user[0].email,
+                seat_number,
+                showtime[0].date.toISOString().split("T")[0],
+                showtime[0].start_time
+            );
+        } catch (emailError) {
+            console.log("Email failed:", emailError.message);
+        } res.status(201).json({ msg: "Reservation was successful." });
     } catch (err) {
         res.status(500).json({ msg: err.message });
     }
@@ -189,9 +199,9 @@ export const deleteReserve = async (req, res) => {
         const [response] = await db.query(selectQuery);
         if (response.length === 0) return res.status(404).json({ msg: "Reservation not found ." });
         const today = new Date();
-        today.setHours(0, 0, 0, 0); 
+        today.setHours(0, 0, 0, 0);
         const showDate = new Date(response[0].date);
-        showDate.setHours(0, 0, 0, 0); 
+        showDate.setHours(0, 0, 0, 0);
         if (showDate <= today)
             return res.status(409).json({ msg: "Cannot cancel reservation. Cancellation must be done before the show date." });
         const removeQuery = `
