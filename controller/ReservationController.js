@@ -73,7 +73,7 @@ export const saveReserve = async (req, res) => {
         const conn = await db.getConnection();
         await conn.beginTransaction();
         const selectShowtimeQuery = `
-            SELECT s.* , m.title AS title
+            SELECT s.* , m.title AS title , m.url AS url
             FROM showtimes AS s
             INNER JOIN movies AS m ON s.movie_id = m.id
             WHERE s.id = ${showtime_id}
