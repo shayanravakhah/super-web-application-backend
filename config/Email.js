@@ -5,6 +5,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 export const EmailSender = async (
   toEmail,
   titleMovie,
+  url,
   seatNumber,
   showtimeDate,
   startTime
@@ -17,6 +18,7 @@ export const EmailSender = async (
       <h1>Reservation Successful</h1>
       <p>Your reservation has been confirmed.</p>
       <h3>${titleMovie}</h3>
+      <img src="${url}" alt="${titleMovie}"  />
       <ul>
         <li><b>Seat:</b> ${seatNumber}</li>
         <li><b>Date:</b> ${showtimeDate}</li>

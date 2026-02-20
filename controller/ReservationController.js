@@ -119,6 +119,7 @@ export const saveReserve = async (req, res) => {
             await EmailSender(
                 user[0].email,
                 showtime[0].title,
+                showtime[0].url,
                 seat_number,
                 showtime[0].date.toISOString().split("T")[0],
                 showtime[0].start_time
