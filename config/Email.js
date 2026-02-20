@@ -4,6 +4,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 export const EmailSender = async (
   toEmail,
+  titleMovie,
   seatNumber,
   showtimeDate,
   startTime
@@ -13,8 +14,9 @@ export const EmailSender = async (
     to: toEmail,
     subject: "Reservation Confirmation 🎬",
     html: `
-      <h2>Reservation Successful</h2>
+      <h1>Reservation Successful</h1>
       <p>Your reservation has been confirmed.</p>
+      <h3>${titleMovie}</h3>
       <ul>
         <li><b>Seat:</b> ${seatNumber}</li>
         <li><b>Date:</b> ${showtimeDate}</li>
