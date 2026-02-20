@@ -73,7 +73,7 @@ export const saveReserve = async (req, res) => {
         const conn = await db.getConnection();
         await conn.beginTransaction();
         const selectShowtimeQuery = `
-            SELECT s.* , m.title AS title , m.url AS url
+            SELECT s.* , m.title AS title , m.image_url AS image_url
             FROM showtimes AS s
             INNER JOIN movies AS m ON s.movie_id = m.id
             WHERE s.id = ${showtime_id}
@@ -119,7 +119,7 @@ export const saveReserve = async (req, res) => {
             await EmailSender(
                 user[0].email,
                 showtime[0].title,
-                showtime[0].url,
+                showtime[0].image_url,
                 seat_number,
                 showtime[0].date.toISOString().split("T")[0],
                 showtime[0].start_time
