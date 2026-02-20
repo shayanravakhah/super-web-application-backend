@@ -1,5 +1,6 @@
 import db from "../config/DB.js";
-import { sendReservationEmail } from "../config/Email.js";
+import { EmailSender } from "../config/Email.js";
+
 
 export const getReserveByUserID = async (req, res) => {
     try {
@@ -114,7 +115,7 @@ export const saveReserve = async (req, res) => {
         await conn.query(updateQuery);
         await conn.commit();
         try {
-            await sendReservationEmail(
+            await EmailSender(
                 user[0].email,
                 seat_number,
                 showtime[0].date.toISOString().split("T")[0],
