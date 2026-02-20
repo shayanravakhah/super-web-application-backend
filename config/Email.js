@@ -1,16 +1,19 @@
-import nodemailer from "nodemailer";
+import nodemailer from "nodemailer"
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: false,
-    requireTLS: true,
-    family: 4,
-        auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  connectionTimeout: 10000,
+  tls: {
+    rejectUnauthorized: false
+  },
+  dns: '4',  
+})
 
 export const sendReservationEmail = async (toEmail, seatNumber, showtimeDate, startTime) => {
     const mailOptions = {
