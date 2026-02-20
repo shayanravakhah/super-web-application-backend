@@ -1,4 +1,5 @@
 import db from "../config/DB.js";
+import { sendReservationEmail } from "../config/Email.js";
 
 export const getReserveByUserID = async (req, res) => {
     try {
@@ -112,7 +113,16 @@ export const saveReserve = async (req, res) => {
         `;
         await conn.query(updateQuery);
         await conn.commit();
-
+        try {
+            await sendReservationEmail(
+                user[0].email,
+                seat_number,
+                showtime[0].date.toISOString().split("T")[0],
+                showtime[0].start_time
+            );
+        } catch (emailError) {
+            console.log("Email failed:", emailError.message);
+        } 
         res.status(201).json({ msg: "Reservation was successful." });
     } catch (err) {
         res.status(500).json({ msg: err.message });
